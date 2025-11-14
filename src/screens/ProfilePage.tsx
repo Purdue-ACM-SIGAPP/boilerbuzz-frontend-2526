@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { useNavigation } from "@react-navigation/native";
 import ClubBanner from "../components/ClubBanner"; // adjust path if needed
 import theme from "../theme";
 import HeaderBanner from "../components/HeaderBanner";
+import { useAuth } from "@clerk/clerk-react";
 
 type FilterKey = "pinned" | "rsvp" | "past" | "invited";
 
@@ -24,10 +25,17 @@ const defaultAvatarUri = require("../../assets/profile.png"); // fallback to pla
 
 export default function ProfilePage() {
   const navigation = useNavigation<any>();
+  const { isSignedIn } = useAuth();
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [username, setUsername] = useState("Name");
   const [bio, setBio] = useState(defaultBio);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("rsvp");
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      navigation.navigate("SignIn");
+    }
+  }, [isSignedIn]);
 
   useEffect(() => {
     (async () => {
@@ -53,7 +61,7 @@ export default function ProfilePage() {
         aspect: [1, 1],
       });
 
-      if (!result.cancelled) {
+      if (!result.canceled) {
         // expo v48+ uses result.assets[0].uri; older versions use result.uri
         // handle both shapes defensively
         // @ts-ignore
