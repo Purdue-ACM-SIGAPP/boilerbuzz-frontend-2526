@@ -15,6 +15,8 @@ import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import HeaderBanner from "../components/HeaderBanner";
 import ClubBanner from "../components/ClubBanner"; // adjust path if needed
 import theme from "../theme";
+import { useAuth } from "@clerk/clerk-expo";
+
 
 type Props = BottomTabScreenProps<BottomTabsParamList, "Profile">;
 

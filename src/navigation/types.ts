@@ -14,8 +14,6 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   Settings: undefined;
-  SignIn: undefined;
-  SignUp: undefined;
   Profile: undefined;
   AddEvent: undefined;
   CreateClub: undefined;

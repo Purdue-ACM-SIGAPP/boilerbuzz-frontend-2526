@@ -1,6 +1,6 @@
 // App.tsx
 import React, { useEffect } from "react";
-import { ClerkProvider } from "@clerk/clerk-react";
+import { ClerkProvider } from "@clerk/clerk-expo"; // Changed to clerk-expo
 import RootStackNavigator from "./src/navigation/RootStackNavigator";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
@@ -10,12 +10,11 @@ import {
 } from "@expo-google-fonts/josefin-sans";
 import { Staatliches_400Regular } from "@expo-google-fonts/staatliches";
 import Constants from "expo-constants";
+import { tokenCache } from "./src/TokenCache"; // Import token cache
 
-const CLERK_PUBLISHABLE_KEY =
-  (Constants.expoConfig?.extra?.CLERK_PUBLISHABLE_KEY ??
-    Constants.manifest?.extra?.CLERK_PUBLISHABLE_KEY ??
-    process.env.CLERK_PUBLISHABLE_KEY ??
-    "");
+
+const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+
 export default function App() {
   const [fontsLoaded] = useFonts({
     JosefinSans_400Regular,
@@ -32,8 +31,11 @@ export default function App() {
 
 
   return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-      <GestureHandlerRootView>
+    <ClerkProvider 
+      publishableKey={CLERK_PUBLISHABLE_KEY}
+      tokenCache={tokenCache} // Add token cache here
+    >
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <RootStackNavigator />
       </GestureHandlerRootView>
     </ClerkProvider>
