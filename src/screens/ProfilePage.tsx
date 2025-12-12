@@ -15,7 +15,7 @@ import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import HeaderBanner from "../components/HeaderBanner";
 import ClubBanner from "../components/ClubBanner"; // adjust path if needed
 import theme from "../theme";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/clerk-expo";
 
 
 type Props = BottomTabScreenProps<BottomTabsParamList, "Profile">;
@@ -31,8 +31,10 @@ const defaultAvatarUri = require("../../assets/profile.png"); // fallback to pla
 export default function ProfilePage() {
   const navigation = useNavigation<any>();
   const { isSignedIn } = useAuth();
-  const [avatarUri, setAvatarUri] = useState<string | null>(null);
-  const [username, setUsername] = useState("Name");
+  const { user } = useUser();
+  // Only use Clerk's image if the user has uploaded one (hasImage), otherwise use local default
+  const [avatarUri, setAvatarUri] = useState<string | null>(user?.hasImage ? user.imageUrl : null);
+  const [username, setUsername] = useState(user?.username || user?.fullName || "Name");
   const [bio, setBio] = useState(defaultBio);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("rsvp");
 
