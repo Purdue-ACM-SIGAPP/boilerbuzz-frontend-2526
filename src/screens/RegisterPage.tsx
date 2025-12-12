@@ -120,7 +120,7 @@ export default function RegisterPage() {
       if (signUp.status === 'complete') {
         await setActive({ session: signUp.createdSessionId });
         // Navigation to Tabs happens automatically via RootStack or:
-        // navigation.navigate("Tabs");
+        navigation.navigate("Tabs");
       }
     } catch (err: any) {
       Alert.alert("Error", "Failed to sign in.");

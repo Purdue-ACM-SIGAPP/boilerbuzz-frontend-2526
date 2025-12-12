@@ -30,8 +30,6 @@ export default function RootStackNavigator() {
           // User is signed in
           <>
           <Stack.Screen name="Tabs" component={BottomTabsNavigator} />
-          <Stack.Screen name="Login" component={LoginPage} />
-          <Stack.Screen name="Register" component={RegisterPage} />
           <Stack.Screen name="Settings" component={SettingsPage} />
           <Stack.Screen name="Profile" component={ProfilePage} />
           <Stack.Screen name="AddEvent" component={AddEventPage} />
