@@ -26,26 +26,39 @@ export default function EventTimeSlot({ events, time }: EventTimeSlotProps) {
     return (
     <>
     
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-            <Text style={styles.time}>{time}:00-{time}:59</Text>
+            <Text style={styles.time}>{time}:00</Text>
             <Text style={styles.eventCount}>{events.length} Event{events.length > 1 && "s"}</Text>
         </View>
 
         {/* Event List */}
-        <ScrollView contentContainerStyle={styles.eventList}>
-            {visibleEvents.map((event, index) => (
-                <EventSlide key={index} data={event} />
-            ))}
+        <View style={styles.listRow}>
+          <View style={styles.yellowBar} />
 
-            {/* Show More Button */}
-            <TouchableOpacity style={styles.showMore} onPress={() => setShowAll(!showAll)}>
-                <Text style={styles.showMoreText}>{showAll?"Show Less":"Show More"}</Text>
-            </TouchableOpacity>
-        </ScrollView>
+          <View style={styles.eventList}>
+              {visibleEvents.map((event, index) => (
+                  <EventSlide key={index} data={event} />
+              ))}
+
+              {!showAll && (
+                <TouchableOpacity style={styles.fadeWrapper} onPress={() => setShowAll(true)}>
+                  <View style={styles.fadeOverlay} />
+                  <Text style={styles.fadeText}>Show More</Text>
+                </TouchableOpacity>
+              )}
+              {/* Show More Button */}
+              {showAll && (
+                <TouchableOpacity style={styles.showMore} onPress={() => setShowAll(false)}>
+                  <Text style={styles.showMoreText}>Show Less</Text>
+                </TouchableOpacity>
+              )}
+          </View>
+        </View>
+
           
-    </View>
+    </ScrollView>
     </>
   );
 }
@@ -84,7 +97,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
   },
+  listRow: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    marginTop: 4,
+  },
 
+  yellowBar: {
+    width: 6,
+    backgroundColor: "#FFD54F", // warm yellow
+    marginRight: 8,
+  },
+
+  fadeWrapper: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 70,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  fadeOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: theme.colors.background,
+    opacity: 0.9,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+
+  fadeText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#555",
+  },
 });
 
 const EventPostShape = StyleSheet.create({
@@ -222,6 +269,8 @@ const EventPostShape = StyleSheet.create({
     width: 12 * scale,
     height: 12 * scale,
   },
+
+  
 });
 
 

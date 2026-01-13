@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, Dimensions } from "react-native";
+import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity } from "react-native";
 import type { BottomTabsParamList } from "../navigation/types";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import theme from "../theme";
@@ -46,7 +46,18 @@ export default function EventSlide({ data }: EventSlideProps) {
     
     <View style={EventPostShape.container}>
  
-    <Image source={require('../../assets/LongboardClub.webp')} style={EventPostShape.imageContainer} resizeMode="cover" /> 
+    <View style={EventPostShape.leftColumn}>
+      <Image
+        source={require('../../assets/LongboardClub.webp')}
+        style={EventPostShape.imageContainer}
+        resizeMode="cover"
+      />
+
+      <TouchableOpacity style={EventPostShape.rsvpBox}>
+        <Text style={EventPostShape.rsvpText}>RSVP</Text>
+      </TouchableOpacity>
+    </View>
+
     
     <View style={EventPostShape.textContainer}>
       <Text style={EventPostShape.title} numberOfLines={1} >{eventTitle}.</Text>
@@ -59,22 +70,20 @@ export default function EventSlide({ data }: EventSlideProps) {
       <Text style = {EventPostShape.club} numberOfLines={1}>{eventHost}</Text>
 
       
-      <View style = {EventPostShape.tagContainerRow1}>
-        
+      <View style={EventPostShape.tagContainer}>
+        {socialTag && (
+          <View style={EventPostShape.socialTag}>
+            <Text style={EventPostShape.socialText}>social</Text>
+          </View>
+        )}
 
-        {socialTag && (<View style = {EventPostShape.socialTag}>
-          <Text style = {EventPostShape.socialText}>social</Text>
-        </View>)}
-
+        {artsTag && (
+          <View style={EventPostShape.artsTag}>
+            <Text style={EventPostShape.socialText}>Arts & Crafts</Text>
+          </View>
+        )}
       </View>
 
-      <View style = {EventPostShape.tagContainerRow2}>
-        
-        {artsTag && (<View style = {EventPostShape.artsTag}>
-          <Text style = {EventPostShape.socialText}>Arts & Crafts</Text>
-        </View>)}
-
-      </View>
 
     </View>
 
@@ -147,6 +156,28 @@ const EventPostShape = StyleSheet.create({
     flexShrink: 1,
   },
 
+  leftColumn: {
+    justifyContent: "flex-start",
+    alignItems: "center",
+    marginRight: 8 * scale,
+  },
+
+  rsvpBox: {
+    marginTop: 6 * scale,
+    paddingHorizontal: 6 * scale,
+    paddingVertical: 2 * scale,
+    borderWidth: 1,
+    borderColor: "black",
+    borderRadius: 4 * scale,
+    backgroundColor: "white",
+  },
+
+  rsvpText: {
+    fontSize: 10 * scale,
+    fontWeight: "600",
+    color: "black",
+  },
+
   location: {
     fontSize: 11 * scale,
     color: "black",
@@ -172,16 +203,13 @@ const EventPostShape = StyleSheet.create({
     flexShrink: 1,
   },
 
-  tagContainerRow1: {
+  tagContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: 2 * scale,
+    marginBottom: 4 * scale,
+    gap: 4 * scale, // optional, for spacing between tags
   },
 
-  tagContainerRow2: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
 
   socialTag: {
     backgroundColor: "rgb(240, 216, 149)",
