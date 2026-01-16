@@ -13,7 +13,11 @@ import Constants from "expo-constants";
 import { tokenCache } from "./src/TokenCache"; // Import token cache
 
 
-const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+const rawClerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+if (!rawClerkKey) {
+  throw new Error("Missing environment variable: EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY");
+}
+const CLERK_PUBLISHABLE_KEY = rawClerkKey;
 
 export default function App() {
   const [fontsLoaded] = useFonts({
