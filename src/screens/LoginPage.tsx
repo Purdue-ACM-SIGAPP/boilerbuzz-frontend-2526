@@ -14,23 +14,15 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import theme from "../theme"
+import { useSignIn } from "@clerk/clerk-expo";
 
 const { width, height } = Dimensions.get("window");
 
+const CURVEDBANNER_HEIGHT = height * 0.66;
+const CURVEDBANNER_SLIDE_TARGET = -CURVEDBANNER_HEIGHT * 0.33;
+const LOGO_SIZE = 300;
+const LOGO_MARGIN_TOP = 200;
 
-
-// Height of the curved banner. It's proportional to the screen height.
-// Change this variable to make the banner taller or shorter.
-const CURVEDBANNER_HEIGHT = height * 0.66; // 0.66 = 2/3 of screen height from what I saw on figma
-
-// The initial offset of the banner when screen loads.
-// Negative values move it higher up, so 0.33 would be 1/3 of the banner above the loaded screen
-const CURVEDBANNER_SLIDE_TARGET = -CURVEDBANNER_HEIGHT * 0.33; // stop around 1/3 down.
-
-const LOGO_SIZE = 300; // size of logo
-const LOGO_MARGIN_TOP = 200; // Distance logo is from top of screen
-
-// Easy way to test and change color schemes/themes
 const COLORS = {
   background: "#edecdd",
   curvedBanner: "#fffaf1",
@@ -38,11 +30,8 @@ const COLORS = {
   smallText: "#555",
 };
 
-
-
-
-/* Login page */
 export default function LoginPage() {
+  const { signIn, setActive, isLoaded } = useSignIn();
   const navigation = useNavigation();
   const slideAnim = useRef(new Animated.Value(CURVEDBANNER_SLIDE_TARGET)).current;
 
@@ -56,6 +45,7 @@ export default function LoginPage() {
   }, []);
 
   const [showLoginInputs, setShowLoginInputs] = useState(false);
+  
   const handleLoginPress = () => {
     Animated.timing(slideAnim, {
       toValue: -CURVEDBANNER_HEIGHT,
@@ -67,7 +57,6 @@ export default function LoginPage() {
     });
   };
 
-
   return (
     <View style={styles.container}>
       <CurvedBanner slideAnim={slideAnim} />
@@ -76,6 +65,9 @@ export default function LoginPage() {
         onLoginPress={handleLoginPress}
         showInputs={showLoginInputs}
         slideAnim={slideAnim}
+        signIn={signIn}
+        setActive={setActive}
+        isLoaded={isLoaded}
       />
     </View>
   );
@@ -112,22 +104,35 @@ function CurvedBanner({ slideAnim }: { slideAnim: Animated.Value }) {
 }
 
 // Bottom section / login area
-function LoginSection({ navigation, onLoginPress, showInputs, slideAnim }: any) {
-  const [username, setusername] = useState("");
+function LoginSection({ navigation, onLoginPress, showInputs, slideAnim, signIn, setActive, isLoaded }: any) {
+  const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
 
-  // Function to check that everything is inputted
-  const inputCheck = () => {
-      if (!username || !password) {
+  const handleSignIn = async () => {
+      if (!isLoaded) return;
+
+      if (!emailAddress || !password) {
         Alert.alert("Error", "Please fill out all fields.");
-      } else {
-        navigation.navigate("Tabs");
+        return;
+      }
+
+      try {
+        const completeSignIn = await signIn.create({
+          identifier: emailAddress,
+          password,
+        });
+        
+        await setActive({ session: completeSignIn.createdSessionId });
+        // Navigation is handled automatically by RootStack when isSignedIn becomes true
+      } catch (err: any) {
+        console.error(JSON.stringify(err, null, 2));
+        Alert.alert("Login Failed", err.errors ? err.errors[0].message : "Invalid credentials");
       }
     };
 
   const loginSlide = slideAnim.interpolate({
     inputRange: [-CURVEDBANNER_HEIGHT, 0],
-    outputRange: [-height * 0.5, 0], // This controls how far the login section slides upwards from the bottom once login is pressed
+    outputRange: [-height * 0.5, 0],
     extrapolate: "clamp",
   });
 
@@ -141,7 +146,6 @@ function LoginSection({ navigation, onLoginPress, showInputs, slideAnim }: any) 
     >
       <Text style={styles.appTitle}>BoilerBuzz</Text>
 
-      {/* Login Button */}
       {!showInputs && (
         <TouchableOpacity style={styles.loginButton} onPress={onLoginPress}>
           <Text style={styles.loginText}>Login</Text>
@@ -150,13 +154,12 @@ function LoginSection({ navigation, onLoginPress, showInputs, slideAnim }: any) 
         
       {showInputs && (
         <View style={styles.inputContainer}>
-
-          {/* Username textbox */}
-          <Text style={styles.label}>Username</Text>
+          <Text style={styles.label}>Email / Username</Text>
           <TextInput 
             style={styles.input}
-            value={username}
-            onChangeText={setusername}
+            value={emailAddress}
+            onChangeText={setEmailAddress}
+            autoCapitalize="none"
           />
 
           {/* Password textbox */}
@@ -168,8 +171,7 @@ function LoginSection({ navigation, onLoginPress, showInputs, slideAnim }: any) 
             secureTextEntry
           />
            
-          {/* Submit button */}
-          <TouchableOpacity style={styles.loginButton} onPress={() => inputCheck()}>
+          <TouchableOpacity style={styles.loginButton} onPress={handleSignIn}>
             <Text style={styles.loginText}>Submit</Text>
           </TouchableOpacity>
 
@@ -195,10 +197,6 @@ function LoginSection({ navigation, onLoginPress, showInputs, slideAnim }: any) 
   );
 }
 
-
-
-
-/* Style Sheets */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -240,7 +238,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginBottom: 20,
     fontFamily: theme.fonts.body,
-    
   },
   inputs: {
     flex: 1,

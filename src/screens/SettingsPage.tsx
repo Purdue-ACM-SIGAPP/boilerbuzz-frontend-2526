@@ -92,9 +92,12 @@ function ToggleSwitch({
   );
 }
 
+import { useAuth } from "@clerk/clerk-expo";
+
 /* Settings page component */
 export default function SettingsPage() {
   const navigation = useNavigation();
+  const { signOut } = useAuth();
 
   // Toggle states for on/off settings
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -169,7 +172,10 @@ export default function SettingsPage() {
           {/* Sign Out Button */}
           <TouchableOpacity
             style={styles.signOutButton}
-            onPress={() => navigation.navigate("Login")}
+            onPress={() => {
+              signOut();
+              // Navigation to Login is handled automatically by RootStack when isSignedIn becomes false
+            }}
           >
             <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>
