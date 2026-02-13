@@ -12,6 +12,7 @@ import SettingsPage from "../screens/SettingsPage";
 import ProfilePage from "../screens/ProfilePage";
 import AddEventPage from "../screens/AddEventPage";
 import CreateClubPage from "../screens/CreateClubPage"; 
+import Clubs from "../screens/Clubs"; 
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -34,6 +35,7 @@ export default function RootStackNavigator() {
           <Stack.Screen name="Profile" component={ProfilePage} />
           <Stack.Screen name="AddEvent" component={AddEventPage} />
           <Stack.Screen name="CreateClub" component={CreateClubPage} />
+        
           </>
         ) : (
           // User is not signed in
