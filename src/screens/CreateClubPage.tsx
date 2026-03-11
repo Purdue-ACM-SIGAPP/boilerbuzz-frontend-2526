@@ -11,15 +11,13 @@ import {
   Alert,
   KeyboardAvoidingView,
   ScrollView,
-  Dimensions,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import HeaderBanner from "../components/HeaderBanner";
 import theme from "../theme";
 import MyButton from "../components/MyButton";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+import { boilerbuzzApi } from "../api/boilerbuzzApi";
 
 // Adjust this if your HeaderBanner has a different height
 const HEADER_HEIGHT = 142;
@@ -29,6 +27,8 @@ export default function CreateClubPage() {
   const [clubName, setClubName] = useState("");
   const [primaryAdvisor, setPrimaryAdvisor] = useState("");
   const [members, setMembers] = useState("");
+  const [allowMemberPosts, setAllowMemberPosts] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -38,7 +38,7 @@ export default function CreateClubPage() {
         if (status !== "granted") {
           Alert.alert(
             "Permission required",
-            "Please allow photo access to choose a club logo."
+            "Please allow photo access to choose a club logo.",
           );
         }
       }
@@ -65,7 +65,7 @@ export default function CreateClubPage() {
     }
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     const memberList = members
       .split(",")
       .map((m) => m.trim())
@@ -79,8 +79,30 @@ export default function CreateClubPage() {
       return;
     }
 
-    console.log({ clubName, primaryAdvisor, members: memberList, logoUri });
-    Alert.alert("Club created", `${clubName} has been created.`);
+    try {
+      setIsSubmitting(true);
+      const createdClub = await boilerbuzzApi.createClub({
+        member_post_permissions: allowMemberPosts,
+      });
+
+      const createdId = createdClub[0]?.id;
+      console.log({
+        clubName,
+        primaryAdvisor,
+        members: memberList,
+        logoUri,
+        createdId,
+      });
+      Alert.alert(
+        "Club created",
+        `${clubName} has been created as Club #${createdId ?? "new"}.`,
+      );
+    } catch (err) {
+      console.error("Failed to create club", err);
+      Alert.alert("Error", "Could not create club on backend.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -156,7 +178,24 @@ export default function CreateClubPage() {
 
               <View style={{ height: 28 }} />
 
-              <MyButton title="Create Club" onPress={handleCreate} />
+              <TouchableOpacity
+                style={styles.permissionRow}
+                onPress={() => setAllowMemberPosts((prev) => !prev)}
+              >
+                <Text style={styles.permissionLabel}>
+                  Allow members to post
+                </Text>
+                <Text style={styles.permissionValue}>
+                  {allowMemberPosts ? "Enabled" : "Disabled"}
+                </Text>
+              </TouchableOpacity>
+
+              <View style={{ height: 16 }} />
+
+              <MyButton
+                title={isSubmitting ? "Creating Club..." : "Create Club"}
+                onPress={handleCreate}
+              />
             </View>
 
             {/* spacer to ensure content stays at top when not enough content */}
@@ -264,5 +303,25 @@ const styles = StyleSheet.create({
   multilineInput: {
     minHeight: 60,
     maxHeight: 120,
+  },
+  permissionRow: {
+    borderWidth: 1,
+    borderColor: theme.colors.lightGrey,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  permissionLabel: {
+    fontFamily: theme.fonts.body,
+    color: "#000",
+    fontSize: 16,
+  },
+  permissionValue: {
+    fontFamily: theme.fonts.heading,
+    color: theme.colors.navyBlue,
+    fontSize: 16,
   },
 });

@@ -3,11 +3,10 @@ import type { NavigatorScreenParams } from "@react-navigation/native";
 
 export type BottomTabsParamList = {
   Home: undefined;
-  Trending: undefined;
   Search: undefined;
+  Add: undefined;
   Pinned: undefined;
   Profile: undefined;
-  AddEvent: undefined;
 };
 
 export type RootStackParamList = {

@@ -47,7 +47,7 @@ export function likesToSize(likes: number) {
  */
 export function makeRandomPosters(
   baseCount: number,
-  howMany: number
+  howMany: number,
 ): PosterData[] {
   return Array.from({ length: howMany }, (_, i) => {
     const id = String(baseCount + i + 1);
@@ -60,7 +60,7 @@ export function makeRandomPosters(
         uri: `https://picsum.photos/seed/${encodeURIComponent(id)}/400/600`,
       },
       likes,
-      link: { type: "tab", name: "Trending" },
+      link: { type: "tab", name: "Home" },
     };
   });
 }

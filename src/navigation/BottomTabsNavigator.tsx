@@ -1,16 +1,16 @@
 // src/navigation/BottomTabsNavigator.tsx
 import React, { useState } from "react";
-import { View, TouchableOpacity, StyleSheet, Platform } from "react-native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  BottomTabBarButtonProps,
+  createBottomTabNavigator,
+} from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 
 import FeedPage from "../screens/HomePage";
-import FeaturedPage from "../components/FeaturedCarousel";
 import BoardPage from "../screens/PinnedPage";
 import SearchPage from "../screens/FindPage";
 import ProfilePage from "../screens/ProfilePage";
-import AddEventPage from "../screens/AddEventPage";
-import CreateClubPage from "../screens/CreateClubPage";
 
 // placeholder empty screen for the Add tab (it won't be navigated to)
 const EmptyScreen = () => null;
@@ -98,14 +98,14 @@ export default function BottomTabsNavigator() {
           name="Add"
           component={EmptyScreen}
           options={{
-            tabBarButton: (
-              props: React.ComponentProps<typeof TouchableOpacity>
-            ) => {
+            tabBarButton: (props: BottomTabBarButtonProps) => {
               // Render a normal tab slot (no absolute positioning).
               // props contains accessibility + onPress handlers; don't spread style because RN passes layout props
               return (
                 <TouchableOpacity
-                  {...props}
+                  accessibilityState={props.accessibilityState}
+                  accessibilityLabel={props.accessibilityLabel}
+                  testID={props.testID}
                   activeOpacity={0.9}
                   onPress={openPopup}
                   style={styles.tabItem} // same layout as other items
@@ -156,9 +156,6 @@ export default function BottomTabsNavigator() {
   );
 }
 
-const TAB_BAR_HEIGHT = 150; // keep your value
-const TAB_ITEM_HEIGHT = 56; // visual area for icons (fits inside tab bar height)
-
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
@@ -170,6 +167,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     bottom: 14,
+  },
+
+  centerHighlight: {
+    borderRadius: 14,
+    backgroundColor: theme.colors.highlight,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
 
   // kept in case you still need absolute for something else (not used for Add)

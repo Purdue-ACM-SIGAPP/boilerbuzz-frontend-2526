@@ -10,12 +10,14 @@ import {
   ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import HeaderBanner from "../components/HeaderBanner";
 import theme from "../theme";
+import type { RootStackParamList } from "../navigation/types";
 
 // Easy way to test and change different color schemes/themes
 const COLORS = {
@@ -51,7 +53,6 @@ function SettingsHeader({
   );
 }
 */
-
 
 /* Toggle switch functionality */
 function ToggleSwitch({
@@ -96,7 +97,8 @@ import { useAuth } from "@clerk/clerk-expo";
 
 /* Settings page component */
 export default function SettingsPage() {
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { signOut } = useAuth();
 
   // Toggle states for on/off settings
@@ -108,14 +110,13 @@ export default function SettingsPage() {
     <SafeAreaProvider>
       <View style={styles.container}>
         {/* --- HEADER SECTION --- */}
-        <View style={{position: "relative"}}>
-          
+        <View style={{ position: "relative" }}>
           {/* I changed the banner so that it uses the component in the files,
               but I couldn't find another way to center the title, so
               I'll just leave this temporary fix until there's a
               way to change the banner component to allow for centered
               text and have a button*/}
-          <HeaderBanner title="                SETTINGS" /> 
+          <HeaderBanner title="                SETTINGS" />
 
           {/* Back Arrow Overlay */}
           <TouchableOpacity
@@ -213,7 +214,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontFamily: theme.fonts.heading,
-    marginBottom: 5
+    marginBottom: 5,
   },
   headerCenter: {
     flex: 1,

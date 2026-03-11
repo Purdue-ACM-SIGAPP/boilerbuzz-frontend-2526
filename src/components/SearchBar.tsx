@@ -11,14 +11,40 @@ import {
 import Images from "../../assets";
 import theme from "../theme";
 
-export default function SearchBar() {
+type SearchBarProps = {
+  value?: string;
+  onChangeText?: (text: string) => void;
+  onSubmit?: () => void;
+  placeholder?: string;
+};
+
+export default function SearchBar({
+  value,
+  onChangeText,
+  onSubmit,
+  placeholder = "Search something...",
+}: SearchBarProps) {
   const [isFocused, setIsFocused] = useState(false);
+  const [internalValue, setInternalValue] = useState("");
   const textInputRef = useRef<TextInput | null>(null);
+
+  const resolvedValue = value ?? internalValue;
+
+  const handleChange = (text: string) => {
+    if (value === undefined) {
+      setInternalValue(text);
+    }
+    onChangeText?.(text);
+  };
 
   const handleClear = () => {
     if (textInputRef.current) {
       textInputRef.current.clear();
     }
+    if (value === undefined) {
+      setInternalValue("");
+    }
+    onChangeText?.("");
   };
 
   return (
@@ -33,10 +59,13 @@ export default function SearchBar() {
           <TextInput
             ref={textInputRef}
             style={[theme.h2, styles.input]}
-            placeholder="Search something..."
+            placeholder={placeholder}
+            value={resolvedValue}
+            onChangeText={handleChange}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             returnKeyType="search"
+            onSubmitEditing={onSubmit}
           />
 
           <TouchableOpacity
