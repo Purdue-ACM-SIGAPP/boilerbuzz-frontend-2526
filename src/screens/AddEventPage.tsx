@@ -1,5 +1,5 @@
 // src/screens/AddEventPage.tsx
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -7,26 +7,27 @@ import {
   TextInput,
   Dimensions,
   TouchableOpacity,
-  Image,
   ScrollView,
   Platform,
   Alert,
+  type AlertButton,
 } from "react-native";
-import type { BottomTabsParamList } from "../navigation/types";
-import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import HeaderBanner from "../components/HeaderBanner";
 import MyButton from "../components/MyButton";
 import theme from "../theme";
 import * as DocumentPicker from "expo-document-picker";
+import { boilerbuzzApi } from "../api/boilerbuzzApi";
+import type { RootStackParamList } from "../navigation/types";
 
-type Props = BottomTabScreenProps<BottomTabsParamList, "AddEvent">;
+type Props = NativeStackScreenProps<RootStackParamList, "AddEvent">;
 
 const { width: screenWidth } = Dimensions.get("window");
 const CONTAINER_MAX = 520;
 const HORIZONTAL_PADDING = 24;
 const containerWidth = Math.min(
   screenWidth - HORIZONTAL_PADDING * 2,
-  CONTAINER_MAX
+  CONTAINER_MAX,
 );
 
 export default function AddEventPage({ navigation }: Props) {
@@ -34,8 +35,28 @@ export default function AddEventPage({ navigation }: Props) {
   const [location, setLocation] = useState("");
   const [month, setMonth] = useState("");
   const [day, setDay] = useState("");
-  const [club, setClub] = useState("");
+  const [selectedClubId, setSelectedClubId] = useState<number | null>(null);
+  const [clubs, setClubs] = useState<Array<{ id: number }>>([]);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [fileUri, setFileUri] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const loadClubs = async () => {
+      try {
+        const clubResponse = await boilerbuzzApi.getClubs();
+        setClubs(clubResponse.map((club) => ({ id: club.id })));
+      } catch (err) {
+        console.error("Unable to load clubs", err);
+      }
+    };
+
+    loadClubs();
+  }, []);
+
+  const displayYear = useMemo(() => {
+    return String(new Date().getFullYear());
+  }, []);
 
   const pickDocument = async () => {
     try {
@@ -44,12 +65,11 @@ export default function AddEventPage({ navigation }: Props) {
         copyToCacheDirectory: true,
       });
 
-      // DocumentPicker returns an object with type === 'success' on success
-      if (result.type === "success") {
-        setFileName(result.name ?? "Selected file");
-        Alert.alert("File selected", result.name ?? "Selected file");
-      } else {
-        // cancelled
+      if (!result.canceled) {
+        const selectedFile = result.assets[0];
+        setFileName(selectedFile.name ?? "Selected file");
+        setFileUri(selectedFile.uri ?? "");
+        Alert.alert("File selected", selectedFile.name ?? "Selected file");
       }
     } catch (err) {
       console.error("Error picking document:", err);
@@ -57,16 +77,71 @@ export default function AddEventPage({ navigation }: Props) {
     }
   };
 
-  const onSubmit = () => {
-    // very simple validation
+  const onSelectClub = () => {
+    if (!clubs.length) {
+      Alert.alert(
+        "No clubs available",
+        "Create a club first, then add an event.",
+      );
+      return;
+    }
+
+    const buttons: AlertButton[] = clubs.slice(0, 8).map((club) => ({
+      text: `Club #${club.id}`,
+      onPress: () => setSelectedClubId(club.id),
+    }));
+    buttons.push({ text: "Cancel", style: "cancel" });
+
+    Alert.alert("Select club", undefined, buttons);
+  };
+
+  const onSubmit = async () => {
     if (!eventName.trim()) return Alert.alert("Please enter an event name");
     if (!location.trim()) return Alert.alert("Please enter a location");
-    if (!club.trim()) return Alert.alert("Please select a club");
+    if (!selectedClubId) return Alert.alert("Please select a club");
 
-    const payload = { eventName, location, month, day, club, fileName };
-    console.log("AddEvent payload:", payload);
-    Alert.alert("Event added", eventName);
-    // navigation.goBack() or other action
+    const numericMonth = Number(month);
+    const numericDay = Number(day);
+
+    if (
+      Number.isNaN(numericMonth) ||
+      Number.isNaN(numericDay) ||
+      numericMonth < 1 ||
+      numericMonth > 12 ||
+      numericDay < 1 ||
+      numericDay > 31
+    ) {
+      return Alert.alert("Please enter a valid month/day");
+    }
+
+    const eventDate = new Date(
+      Number(displayYear),
+      numericMonth - 1,
+      numericDay,
+      12,
+      0,
+      0,
+    );
+
+    try {
+      setIsSubmitting(true);
+      await boilerbuzzApi.createPoster({
+        club_id: selectedClubId,
+        user_id: 1,
+        location,
+        position: "(0,0)",
+        img_path: fileUri,
+        date: eventDate.toISOString(),
+      });
+
+      Alert.alert("Event added", `${eventName} has been posted.`);
+      navigation.goBack();
+    } catch (err) {
+      console.error("Failed to create event", err);
+      Alert.alert("Error", "Failed to add event to backend.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -149,7 +224,7 @@ export default function AddEventPage({ navigation }: Props) {
 
             <View style={styles.yearCol}>
               <Text style={styles.smallLabel}>Year</Text>
-              <Text style={styles.yearText}>2025</Text>
+              <Text style={styles.yearText}>{displayYear}</Text>
             </View>
 
             {/* optional calendar icon - replace with your SVG/PNG */}
@@ -160,25 +235,26 @@ export default function AddEventPage({ navigation }: Props) {
           <Text style={[styles.label, { marginTop: 20 }]}>
             Club <Text style={styles.required}>*</Text>
           </Text>
-          <TouchableOpacity
-            style={styles.input}
-            onPress={() => Alert.alert("Select club")}
-          >
+          <TouchableOpacity style={styles.input} onPress={onSelectClub}>
             <Text
               style={[
                 styles.inputText,
-                { color: club ? "#000" : theme.colors.darkGrey },
+                { color: selectedClubId ? "#000" : theme.colors.darkGrey },
               ]}
             >
-              {club || "Select a club"}
+              {selectedClubId ? `Club #${selectedClubId}` : "Select a club"}
             </Text>
             <Text style={styles.chev}>▾</Text>
           </TouchableOpacity>
 
+          <Text style={[theme.h3, styles.clubCountText]}>
+            {clubs.length} club(s) available from backend
+          </Text>
+
           <View style={{ height: 28 }} />
 
           <MyButton
-            title="Add Event"
+            title={isSubmitting ? "Adding Event..." : "Add Event"}
             onPress={onSubmit}
             style={styles.addButton}
             textStyle={styles.addButtonText}
@@ -302,6 +378,10 @@ const styles = StyleSheet.create({
   yearText: {
     fontFamily: theme.fonts.body,
     fontSize: 18,
+    color: theme.colors.darkGrey,
+  },
+  clubCountText: {
+    marginTop: 10,
     color: theme.colors.darkGrey,
   },
 

@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text, Image, StyleSheet, Pressable } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import theme from "../theme";
 import Images from "../../assets";
 
@@ -28,6 +27,8 @@ interface PosterCardProps {
   clubLogo: string;
   attendees: User[];
   comments: Comment[];
+  posterImageUri?: string;
+  likeCount?: number;
   onPress?: () => void;
 }
 
@@ -43,6 +44,8 @@ export default function PosterCard({
   clubLogo,
   attendees,
   comments,
+  posterImageUri,
+  likeCount = 0,
   onPress,
 }: PosterCardProps) {
   return (
@@ -60,17 +63,33 @@ export default function PosterCard({
       </View>
 
       {/* Poster Image */}
-      <View style={styles.poster} />
+      {posterImageUri ? (
+        <Image source={{ uri: posterImageUri }} style={styles.posterImage} />
+      ) : (
+        <View style={styles.poster} />
+      )}
 
       {/* Action Row (Likes, Comments, etc.) */}
       <View style={styles.actionRow}>
-        <Image source={Images.favorite} style={styles.icon} resizeMode="contain" />
-        <Text style={[theme.h2Bold, styles.likeCount]}>101</Text>
+        <Image
+          source={Images.favorite}
+          style={styles.icon}
+          resizeMode="contain"
+        />
+        <Text style={[theme.h2Bold, styles.likeCount]}>{likeCount}</Text>
         <Text style={[theme.h2Bold, styles.likeLabel]}>Likes</Text>
 
         <View style={styles.rightAlignedRow}>
-          <Image source={Images.comment} style={styles.icon} resizeMode="contain" />
-          <Image source={Images.send} style={styles.icon} resizeMode="contain" />
+          <Image
+            source={Images.comment}
+            style={styles.icon}
+            resizeMode="contain"
+          />
+          <Image
+            source={Images.send}
+            style={styles.icon}
+            resizeMode="contain"
+          />
           <Image source={Images.pin} style={styles.icon} resizeMode="contain" />
         </View>
       </View>
@@ -78,13 +97,20 @@ export default function PosterCard({
       {/* Description + Event Button */}
       <View style={styles.footerRow}>
         <View style={styles.descriptionContainer}>
+          <Text style={theme.h2Bold}>{eventTitle}</Text>
+          <Text style={theme.h3}>{eventDate}</Text>
+          <Text style={theme.h3}>{eventLocation}</Text>
           <Text style={theme.h2}>{description}</Text>
         </View>
 
         <View style={styles.seeMoreRow}>
           <Pressable style={styles.seeEventBtn}>
             <Text style={theme.h2Bold}>See Event</Text>
-            <Image source={Images.toEvent} style={styles.toEventIcon} resizeMode="contain" />
+            <Image
+              source={Images.toEvent}
+              style={styles.toEventIcon}
+              resizeMode="contain"
+            />
           </Pressable>
         </View>
       </View>
@@ -126,6 +152,11 @@ const styles = StyleSheet.create({
   // --- Poster ---
   poster: {
     backgroundColor: theme.colors.highlight,
+    width: "100%",
+    height: 400,
+    marginVertical: 8,
+  },
+  posterImage: {
     width: "100%",
     height: 400,
     marginVertical: 8,

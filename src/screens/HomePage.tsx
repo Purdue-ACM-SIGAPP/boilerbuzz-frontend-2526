@@ -1,90 +1,114 @@
 import React from "react";
 import {
+  ActivityIndicator,
   View,
   StyleSheet,
   FlatList,
-  Dimensions,
+  Text,
+  TouchableOpacity,
 } from "react-native";
-import type { BottomTabsParamList } from "../navigation/types";
-import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import theme from "../theme";
 import HeaderBanner from "../components/HeaderBanner";
 import PosterCard from "../components/PosterCard";
 import FeaturedCarousel from "../components/FeaturedCarousel";
+import { boilerbuzzApi } from "../api/boilerbuzzApi";
 
-type Props = BottomTabScreenProps<BottomTabsParamList, "Home">;
+type HomePosterCard = {
+  id: string;
+  eventTitle: string;
+  eventDate: string;
+  eventLocation: string;
+  description: string;
+  clubName: string;
+  clubLogo: string;
+  attendees: [];
+  comments: [];
+  posterImageUri: string;
+  likeCount: number;
+};
 
-const { width } = Dimensions.get("window");
+const carouselColors = ["#EDECDD", "#F5D6C6", "#C8E1E7", "#DDEED1", "#FBE2E5"];
 
-// Example carousel items
-const items = [
-  { id: 1, title: "Item 1", color: "#EDECDD" },
-  { id: 2, title: "Item 2", color: "#F5D6C6" },
-  { id: 3, title: "Item 3", color: "#C8E1E7" },
-  { id: 4, title: "Item 4", color: "#DDEED1" },
-  { id: 5, title: "Item 5", color: "#FBE2E5" },
-];
+const buildClubLogo = (clubId: number) =>
+  `https://ui-avatars.com/api/?name=Club+${clubId}&background=feb210&color=07112a`;
 
-export default function FeaturedPage({ navigation, route }: Props) {
-  // ============================== DUMMY DATA ==============================
-  const events = [
-    {
-      id: "1",
-      eventTitle: "Mid-Autumn Festival Celebration",
-      eventDate: "Oct 12, 2025",
-      eventLocation: "Union Ballroom",
-      description: "Join us for mooncakes, lanterns, and live performances!",
-      clubName: "Asian Student Union",
-      clubLogo: "https://i.pravatar.cc/150?img=1",
-      attendees: [
-        { id: "1", name: "Soleil", avatar: "https://i.pravatar.cc/150?img=2" },
-        { id: "2", name: "Alex", avatar: "https://i.pravatar.cc/150?img=3" },
-        { id: "3", name: "Linh", avatar: "https://i.pravatar.cc/150?img=4" },
-      ],
-      comments: [
-        { id: "1", user: "Jamie", text: "Can’t wait!" },
-        { id: "2", user: "Linh", text: "This looks amazing 💛" },
-      ],
-    },
-    {
-      id: "2",
-      eventTitle: "Club Fair 2025",
-      eventDate: "Sep 30, 2025",
-      eventLocation: "Campus Quad",
-      description: "Explore 100+ clubs, get free swag, and meet new friends.",
-      clubName: "Student Council",
-      clubLogo: "https://i.pravatar.cc/150?img=5",
-      attendees: [
-        { id: "1", name: "Soleil", avatar: "https://i.pravatar.cc/150?img=6" },
-        { id: "2", name: "Mia", avatar: "https://i.pravatar.cc/150?img=7" },
-      ],
-      comments: [{ id: "1", user: "Eli", text: "I’ll definitely stop by!" }],
-    },
-    {
-      id: "3",
-      eventTitle: "Coding Hackathon 2025",
-      eventDate: "Nov 1, 2025",
-      eventLocation: "Innovation Hub",
-      description:
-        "24 hours. One project. Free pizza. Let’s build something awesome.",
-      clubName: "Tech Club",
-      clubLogo: "https://i.pravatar.cc/150?img=8",
-      attendees: [
-        { id: "1", name: "Soleil", avatar: "https://i.pravatar.cc/150?img=9" },
-        { id: "2", name: "Aria", avatar: "https://i.pravatar.cc/150?img=10" },
-        { id: "3", name: "Kai", avatar: "https://i.pravatar.cc/150?img=11" },
-        { id: "4", name: "Devon", avatar: "https://i.pravatar.cc/150?img=12" },
-      ],
-      comments: [
-        { id: "1", user: "Riley", text: "Team up with me?" },
-        { id: "2", user: "Taylor", text: "Hackathon = caffeine + chaos ☕" },
-      ],
-    },
-  ];
+const toHomePosterCard = (poster: {
+  id: number;
+  club_id: number;
+  location: string;
+  date: string;
+  img_path: string;
+}): HomePosterCard => ({
+  id: String(poster.id),
+  eventTitle: `Poster ${poster.id}`,
+  eventDate: new Date(poster.date).toLocaleDateString(),
+  eventLocation: poster.location,
+  description: poster.location,
+  clubName: `Club #${poster.club_id}`,
+  clubLogo: buildClubLogo(poster.club_id),
+  attendees: [],
+  comments: [],
+  posterImageUri: poster.img_path,
+  likeCount: 0,
+});
+
+export default function HomePage() {
+  const [events, setEvents] = React.useState<HomePosterCard[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const loadFeed = React.useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const posters = await boilerbuzzApi.getPosters();
+      const cards = posters
+        .slice()
+        .sort((a, b) => b.id - a.id)
+        .map((poster) => toHomePosterCard(poster));
+
+      setEvents(cards);
+    } catch (err) {
+      console.error("Failed to load feed", err);
+      setError("Could not load events from backend.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadFeed();
+  }, [loadFeed]);
+
+  const carouselItems = React.useMemo(() => {
+    return carouselColors.map((color, index) => ({
+      id: index + 1,
+      title: `Featured ${index + 1}`,
+      color,
+    }));
+  }, []);
 
   return (
     <View style={styles.container}>
-      <HeaderBanner title="Home"/>
+      <HeaderBanner title="Home" />
+
+      {isLoading ? (
+        <View style={styles.statusContainer}>
+          <ActivityIndicator size="large" color={theme.colors.navyBlue} />
+          <Text style={theme.h2}>Loading posters...</Text>
+        </View>
+      ) : null}
+
+      {!isLoading && error ? (
+        <View style={styles.statusContainer}>
+          <Text style={[theme.h2, styles.errorText]}>{error}</Text>
+          <TouchableOpacity onPress={loadFeed} style={styles.retryButton}>
+            <Text style={theme.h2Bold}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
       <FlatList
         data={events}
         keyExtractor={(item) => item.id}
@@ -92,8 +116,15 @@ export default function FeaturedPage({ navigation, route }: Props) {
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <>
-            <FeaturedCarousel items={items} />
+            <FeaturedCarousel items={carouselItems} />
           </>
+        }
+        ListEmptyComponent={
+          !isLoading && !error ? (
+            <Text style={[theme.h2, styles.emptyState]}>
+              No posters found yet.
+            </Text>
+          ) : null
         }
         contentContainerStyle={{ paddingBottom: 40 }}
       />
@@ -105,5 +136,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  statusContainer: {
+    alignItems: "center",
+    gap: 10,
+    marginVertical: 12,
+  },
+  retryButton: {
+    borderWidth: 1,
+    borderRadius: 10,
+    borderColor: theme.colors.lightGrey,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: theme.colors.highlight,
+  },
+  errorText: {
+    color: "#B33A3A",
+  },
+  emptyState: {
+    textAlign: "center",
+    marginTop: 24,
   },
 });
